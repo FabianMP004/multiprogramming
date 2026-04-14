@@ -1,0 +1,225 @@
+
+Discarded input sections
+
+ .comment       0x00000000       0x13 build/os.o
+ .comment       0x00000000       0x13 build/os_main.o
+ .comment       0x00000000       0x13 build/scheduler.o
+ .comment       0x00000000       0x13 build/lib_stdio.o
+ .comment       0x00000000       0x13 build/lib_string.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+OS_CODE          0x82000000         0x00010000         xrw
+OS_STACK         0x82010000         0x00002000         rw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+
+.vectors        0x82000000       0x3c
+ *(.vectors)
+ .vectors       0x82000000       0x3c build/root.o
+                0x82000000                _start
+
+.text           0x8200003c      0x835
+ *(.text)
+ .text          0x8200003c      0x144 build/root.o
+                0x8200003c                reset_handler
+                0x82000078                irq_handler
+ .text          0x82000180      0x170 build/os.o
+                0x82000180                uart_putc
+                0x820001a4                uart_puts
+                0x820001cc                timer_irq_handler
+                0x820001f0                main
+ .text          0x820002f0       0x8c build/os_main.o
+                0x820002f0                os_main
+ .text          0x8200037c      0x114 build/scheduler.o
+                0x8200037c                scheduler_init
+                0x82000470                scheduler_current
+ .text          0x82000490      0x114 build/lib_stdio.o
+                0x82000490                print_uint
+                0x82000510                print_int
+                0x8200053c                print_hex
+ .text          0x820005a4      0x154 build/lib_string.o
+                0x820005a4                str_len
+                0x820005d8                str_cmp
+                0x82000618                str_cpy
+                0x82000630                str_ncpy
+                0x82000674                str_cat
+                0x820006b0                mem_set
+                0x820006d4                mem_cpy
+ *(.text.*)
+ *(.rodata)
+ *(.rodata.*)
+ .rodata.str1.4
+                0x820006f8      0x179 build/os.o
+                                 0x83 (size before relaxing)
+ .rodata.str1.4
+                0x82000871        0x0 build/os_main.o
+                                 0xe4 (size before relaxing)
+ .rodata.str1.4
+                0x82000871        0x0 build/lib_stdio.o
+                                 0x11 (size before relaxing)
+
+.glue_7         0x82000874        0x0
+ .glue_7        0x82000874        0x0 linker stubs
+
+.glue_7t        0x82000874        0x0
+ .glue_7t       0x82000874        0x0 linker stubs
+
+.vfp11_veneer   0x82000874        0x0
+ .vfp11_veneer  0x82000874        0x0 linker stubs
+
+.v4_bx          0x82000874        0x0
+ .v4_bx         0x82000874        0x0 linker stubs
+
+.iplt           0x82000874        0x0
+ .iplt          0x82000874        0x0 build/root.o
+
+.rel.dyn        0x82000874        0x0
+ .rel.iplt      0x82000874        0x0 build/root.o
+
+.data           0x82000874        0x4
+ *(.data)
+ .data          0x82000874        0x0 build/root.o
+ .data          0x82000874        0x0 build/os.o
+ .data          0x82000874        0x0 build/os_main.o
+ .data          0x82000874        0x4 build/scheduler.o
+ .data          0x82000878        0x0 build/lib_stdio.o
+ .data          0x82000878        0x0 build/lib_string.o
+ *(.data.*)
+
+.igot.plt       0x82000878        0x0
+ .igot.plt      0x82000878        0x0 build/root.o
+
+.bss            0x82000878      0x124
+                0x82000878                        __bss_start__ = .
+ *(.bss)
+ .bss           0x82000878        0x0 build/root.o
+ .bss           0x82000878       0x40 build/os.o
+                0x82000878                saved_svc_lr
+                0x8200087c                saved_svc_sp
+                0x82000880                saved_lr
+                0x82000884                saved_regs
+ .bss           0x820008b8        0x0 build/os_main.o
+ .bss           0x820008b8       0xe4 build/scheduler.o
+ .bss           0x8200099c        0x0 build/lib_stdio.o
+ .bss           0x8200099c        0x0 build/lib_string.o
+ *(.bss.*)
+ *(COMMON)
+                0x8200099c                        __bss_end__ = .
+
+.stack          0x82010000     0x2000
+                0x82010000                        . = ALIGN (0x8)
+                0x82010000                        __os_stack_bottom = .
+                0x82012000                        . = (. + 0x2000)
+ *fill*         0x82010000     0x2000 
+                0x82012000                        __os_stack_top = .
+
+/DISCARD/
+ *(.comment)
+ *(.note*)
+LOAD build/root.o
+LOAD build/os.o
+LOAD build/os_main.o
+LOAD build/scheduler.o
+LOAD build/lib_stdio.o
+LOAD build/lib_string.o
+OUTPUT(build/os.elf elf32-littlearm)
+LOAD linker stubs
+
+.ARM.attributes
+                0x00000000       0x2d
+ .ARM.attributes
+                0x00000000       0x1d build/root.o
+ .ARM.attributes
+                0x0000001d       0x31 build/os.o
+ .ARM.attributes
+                0x0000004e       0x31 build/os_main.o
+ .ARM.attributes
+                0x0000007f       0x31 build/scheduler.o
+ .ARM.attributes
+                0x000000b0       0x31 build/lib_stdio.o
+ .ARM.attributes
+                0x000000e1       0x31 build/lib_string.o
+
+.debug_line     0x00000000      0x758
+ .debug_line    0x00000000       0xc3 build/root.o
+ .debug_line    0x000000c3      0x183 build/os.o
+ .debug_line    0x00000246       0x7b build/os_main.o
+ .debug_line    0x000002c1      0x215 build/scheduler.o
+ .debug_line    0x000004d6      0x10b build/lib_stdio.o
+ .debug_line    0x000005e1      0x177 build/lib_string.o
+
+.debug_line_str
+                0x00000000       0x3c
+ .debug_line_str
+                0x00000000       0x3c build/root.o
+
+.debug_info     0x00000000      0xb82
+ .debug_info    0x00000000       0x23 build/root.o
+ .debug_info    0x00000023      0x23f build/os.o
+ .debug_info    0x00000262      0x1a1 build/os_main.o
+ .debug_info    0x00000403      0x2c8 build/scheduler.o
+ .debug_info    0x000006cb      0x1e8 build/lib_stdio.o
+ .debug_info    0x000008b3      0x2cf build/lib_string.o
+
+.debug_abbrev   0x00000000      0x5a4
+ .debug_abbrev  0x00000000       0x12 build/root.o
+ .debug_abbrev  0x00000012      0x163 build/os.o
+ .debug_abbrev  0x00000175       0xae build/os_main.o
+ .debug_abbrev  0x00000223      0x190 build/scheduler.o
+ .debug_abbrev  0x000003b3      0x11a build/lib_stdio.o
+ .debug_abbrev  0x000004cd       0xd7 build/lib_string.o
+
+.debug_aranges  0x00000000       0xc8
+ .debug_aranges
+                0x00000000       0x28 build/root.o
+ .debug_aranges
+                0x00000028       0x20 build/os.o
+ .debug_aranges
+                0x00000048       0x20 build/os_main.o
+ .debug_aranges
+                0x00000068       0x20 build/scheduler.o
+ .debug_aranges
+                0x00000088       0x20 build/lib_stdio.o
+ .debug_aranges
+                0x000000a8       0x20 build/lib_string.o
+
+.debug_str      0x00000000      0x301
+ .debug_str     0x00000000      0x301 build/root.o
+                                 0x4a (size before relaxing)
+ .debug_str     0x00000301        0x0 build/os.o
+                                0x1dc (size before relaxing)
+ .debug_str     0x00000301        0x0 build/os_main.o
+                                0x16a (size before relaxing)
+ .debug_str     0x00000301        0x0 build/scheduler.o
+                                0x1f4 (size before relaxing)
+ .debug_str     0x00000301        0x0 build/lib_stdio.o
+                                0x128 (size before relaxing)
+ .debug_str     0x00000301        0x0 build/lib_string.o
+                                0x136 (size before relaxing)
+
+.debug_rnglists
+                0x00000000       0x1a
+ .debug_rnglists
+                0x00000000       0x1a build/root.o
+
+.debug_loclists
+                0x00000000      0x43c
+ .debug_loclists
+                0x00000000       0x2b build/os.o
+ .debug_loclists
+                0x0000002b       0xa4 build/scheduler.o
+ .debug_loclists
+                0x000000cf       0xf0 build/lib_stdio.o
+ .debug_loclists
+                0x000001bf      0x27d build/lib_string.o
+
+.debug_frame    0x00000000      0x1ac
+ .debug_frame   0x00000000       0x60 build/os.o
+ .debug_frame   0x00000060       0x28 build/os_main.o
+ .debug_frame   0x00000088       0x38 build/scheduler.o
+ .debug_frame   0x000000c0       0x6c build/lib_stdio.o
+ .debug_frame   0x0000012c       0x80 build/lib_string.o

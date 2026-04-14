@@ -18,6 +18,7 @@
  * ============================================================================= */
 
 #include "os.h"
+#include "pcb.h"
 
 /* ---------------------------------------------------------------------------
  * AM335x Base Addresses (from TRM)
@@ -243,37 +244,8 @@ static void cpu_irq_enable(void)
  * ------------------------------------------------------------------------- */
 void timer_irq_handler(void)
 {
-    /* --- 1. Acknowledge DMTimer2 overflow interrupt --- */
     REG(DMTIMER2_BASE, TIMER_TISR) = TIMER_TISR_OVF;
-
-    /* --- 2. Send End-of-Interrupt to INTC --- */
-    REG(INTC_BASE, INTC_CONTROL) = 0x1;  /* NewIRQAgr bit */
-
-    /* --- 3. DEV B: INSERT SCHEDULER / CONTEXT SWITCH LOGIC HERE --- */
-    /*
-     * Expected Dev B implementation:
-     *
-     *   extern PCB pcb[];
-     *   extern int current_proc;
-     *
-     *   // Save current process
-     *   pcb[current_proc].regs[0..12] = saved_regs[0..12];
-     *   pcb[current_proc].lr          = saved_lr - 4;   // actual interrupted PC
-     *   pcb[current_proc].sp          = saved_svc_sp;
-     *   pcb[current_proc].svc_lr      = saved_svc_lr;
-     *
-     *   // Round-Robin select
-     *   current_proc = (current_proc == 1) ? 2 : 1;
-     *
-     *   // Restore next process
-     *   saved_regs[0..12] = pcb[current_proc].regs[0..12];
-     *   saved_lr          = pcb[current_proc].lr + 4;   // LR_irq = PC + 4
-     *   saved_svc_sp      = pcb[current_proc].sp;
-     *   saved_svc_lr      = pcb[current_proc].svc_lr;
-     */
-
-    /* --- Stub: print a tick marker so Dev A can verify timer fires --- */
-    uart_puts("[OS] tick\r\n");
+    REG(INTC_BASE, INTC_CONTROL) = 0x1;
 }
 
 /* ---------------------------------------------------------------------------
@@ -306,14 +278,11 @@ int main(void)
     cpu_irq_enable();
     uart_puts("[OS] IRQ enabled\r\n");
 
-    /*
-     * 7. DEV B will add PCB initialization and the first context switch here.
-     *    For now we spin — timer interrupts will fire and print "[OS] tick"
-     *    so Dev A can verify the full interrupt pipeline works.
-     */
-    uart_puts("[OS] Spinning — waiting for timer interrupts...\r\n");
-    while (1)
-        ;
+    scheduler_init();
+
+    while (1) {
+        __asm__ volatile ("wfi");
+    }
 
     return 0;
 }
