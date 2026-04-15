@@ -19,7 +19,16 @@ typedef struct {
     proc_state_t state;
 } pcb_t;
 
+/* Inicializa PCBs (P1/P2) */
 void scheduler_init(void);
+
+/* Devuelve PCB actual (útil para debugging) */
 pcb_t *scheduler_current(void);
+
+/* Called from the IRQ timer handler: do save/restore + select next */
+void scheduler_tick(void);
+
+/* Opcional: pre-load saved_* for first process so early IRQ returns into it */
+void scheduler_start_first(void);
 
 #endif /* SCHEDULER_H */

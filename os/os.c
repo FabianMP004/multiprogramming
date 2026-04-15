@@ -18,7 +18,7 @@
  * ============================================================================= */
 
 #include "os.h"
-#include "pcb.h"
+#include "scheduler.h"
 
 /* ---------------------------------------------------------------------------
  * AM335x Base Addresses (from TRM)
@@ -242,11 +242,20 @@ static void cpu_irq_enable(void)
  * CONTRACT: This function must always ack the timer and INTC.
  *           Dev B adds scheduler logic AFTER the acks.
  * ------------------------------------------------------------------------- */
+
 void timer_irq_handler(void)
 {
+    /* 1. Acknowledge DMTimer2 overflow interrupt */
     REG(DMTIMER2_BASE, TIMER_TISR) = TIMER_TISR_OVF;
-    REG(INTC_BASE, INTC_CONTROL) = 0x1;
+
+    /* 2. Send End-of-Interrupt to INTC */
+    REG(INTC_BASE, INTC_CONTROL) = 0x1;  /* NewIRQAgr bit */
+
+    /* 3. Call scheduler to save current and restore next */
+    scheduler_tick();
 }
+
+
 
 /* ---------------------------------------------------------------------------
  * main — OS entry point (called from reset_handler in root.s)
@@ -268,17 +277,18 @@ int main(void)
     /* 4. Configure INTC — unmask IRQ 68 */
     intc_init();
     uart_puts("[OS] INTC configured, IRQ 68 unmasked\r\n");
+    
+    /* 5. Initialize scheduler / PCBs BEFORE enabling IRQs */
+    scheduler_init();
+    /* opcional: scheduler_start_first(); */
 
-    /* 5. Memory barrier — ensure all HW writes are committed
-     *    before enabling interrupts */
+    /* 6. Memory barriers ... */
     __asm__ volatile ("dsb" ::: "memory");
     __asm__ volatile ("isb");
 
-    /* 6. Enable IRQ in CPU */
+    /* Enable IRQ in CPU */
     cpu_irq_enable();
     uart_puts("[OS] IRQ enabled\r\n");
-
-    scheduler_init();
 
     while (1) {
         __asm__ volatile ("wfi");
