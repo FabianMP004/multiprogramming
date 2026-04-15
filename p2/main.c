@@ -1,7 +1,10 @@
+/* =============================================================================
+ * p2/main.c  —  User Process 2 (Dev C)
+ * Imprime letras a-z en bucle infinito
+ * ============================================================================= */
+
 #include "os.h"
 #include "stdio.h"
-
-/* main.c P2 */
 
 int main(void)
 {
@@ -9,11 +12,11 @@ int main(void)
 
     while (1) {
         PRINT("----From P2: %c\r\n", c);
-        if (c >= 'z') c = 'a';
-        else c++;
-        
+        c = (c == 'z') ? 'a' : (c + 1);
+
+        /* Delay para que se vea el interleaving con P1 */
         for (volatile int d = 0; d < 200000; ++d);
     }
 
-    return 0;
+    return 0;   /* Nunca llega aquí */
 }
