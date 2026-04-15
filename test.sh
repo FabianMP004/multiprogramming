@@ -1,19 +1,4 @@
 #!/usr/bin/env bash
-# test.sh — Quick verification script for P1/P2 link addresses
-#
-# Purpose:
-#   - Build P1 and P2
-#   - Verify that the symbol `main` and the .text VMA are placed at the
-#     expected base addresses (0x82100000 for P1, 0x82200000 for P2).
-#
-# Usage:
-#   chmod +x test.sh
-#   ./test.sh
-#
-# Notes:
-#   - Respects CROSS environment variable (default: arm-linux-gnueabihf-)
-#   - Exits non-zero on failure and prints helpful diagnostics.
-# -----------------------------------------------------------------------------
 
 set -euo pipefail
 

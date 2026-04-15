@@ -1,22 +1,11 @@
 @ =============================================================================
 @ root.s — Bare-metal ARM Cortex-A8 entry point
 @ BeagleBone Black (AM335x)
-@
-@ Dev A responsibilities:
-@ - Set CPU to System mode
-@ - Set initial OS stack pointer
-@ - Clear .bss section
-@ - Set up ARM vector table via VBAR
-@ - IRQ handler (Fase 3 - Context Switch completo)
-@ - Jump to C main()
 @ =============================================================================
     .syntax unified
     .arch armv7-a
     .arm
 
-@ -----------------------------------------------------------------------------
-@ ARM mode constants
-@ -----------------------------------------------------------------------------
     .equ MODE_IRQ, 0x12
     .equ MODE_SVC, 0x13
     .equ MODE_SYS, 0x1F
@@ -35,7 +24,7 @@ _start:
     ldr pc, =prefetch_handler
     ldr pc, =data_handler
     nop
-    ldr pc, =irq_handler      @ <-- Timer IRQ lands here
+    ldr pc, =irq_handler
     ldr pc, =fiq_handler
 
 @ -----------------------------------------------------------------------------
@@ -50,7 +39,6 @@ reset_handler:
     mcr p15, 0, r0, c12, c0, 0
     isb
 
-    @ Clear .bss
     ldr r0, =__bss_start__
     ldr r1, =__bss_end__
     mov r2, #0
@@ -67,47 +55,90 @@ halt:
     b halt
 
 @ =============================================================================
-@ IRQ Handler - FASE 3 (Context Switch completo)
+@ Context-save variables — allocated here, exported for scheduler.c
 @ =============================================================================
+    .section .bss
+    .global saved_regs
+    .global saved_lr
+    .global saved_svc_sp
+    .global saved_svc_lr
+    .balign 4
+saved_regs:   .space 52    @ r0-r12 (13 words × 4)
+saved_lr:     .space 4     @ LR_irq = interrupted PC + 4
+saved_svc_sp: .space 4     @ SP of interrupted process (SVC bank)
+saved_svc_lr: .space 4     @ LR of interrupted process (SVC bank)
+
+@ =============================================================================
+@ IRQ Handler — saves context into saved_*, calls scheduler_tick(), restores
+@ =============================================================================
+    .section .text
     .global irq_handler
 irq_handler:
-    sub     lr, lr, #4                  @ PC correcto = LR_irq - 4
-    stmfd   sp!, {r0-r12, lr}           @ Guardar R0-R12 + LR_irq
+    @ Correct LR_irq to exact interrupted PC
+    sub     lr, lr, #4
 
-    @ Guardar SPSR, SP_svc y LR_svc
+    @ Push r0-r12 + LR onto IRQ stack temporarily
+    stmfd   sp!, {r0-r12, lr}
+
+    @ Peek into SVC bank for SP_svc / LR_svc
     mrs     r0, spsr
-    msr     cpsr_c, #0xD3               @ SVC mode + IRQs disabled
-    mov     r1, sp                      @ SP del proceso (SVC)
-    mov     r2, lr                      @ LR del proceso
-    msr     cpsr_c, #0xD2               @ volver a IRQ mode
+    msr     cpsr_c, #0xD3           @ switch to SVC, IRQs off
+    mov     r1, sp
+    mov     r2, lr
+    msr     cpsr_c, #0xD2           @ back to IRQ
 
-    stmfd   sp!, {r0, r1, r2}           @ SPSR, SP_svc, LR_svc
+    @ Persist to saved_* globals
+    ldr     r3, =saved_regs
+    ldmfd   sp, {r4-r12}            @ peek (not pop) r1-r12 from stack
+    @ Actually copy r0-r12 from stack to saved_regs
+    add     r3, r3, #0              @ r3 = &saved_regs[0]
+    ldmfd   sp!, {r4}               @ pop r0
+    str     r4, [r3], #4            @ saved_regs[0] = r0
+    ldmfd   sp!, {r4-r12}           @ pop r1-r9
+    stmia   r3!, {r4-r12}           @ saved_regs[1-9]
+    ldmfd   sp!, {r4-r6}            @ pop r10, r11, r12
+    stmia   r3!, {r4-r6}            @ saved_regs[10-12]
+    ldmfd   sp!, {r4}               @ pop original LR (= interrupted PC)
+    ldr     r3, =saved_lr
+    str     r4, [r3]
+    ldr     r3, =saved_svc_sp
+    str     r1, [r3]
+    ldr     r3, =saved_svc_lr
+    str     r2, [r3]
 
-    @ Llamar al handler en C
+    @ Call C IRQ handler to ACK timer/INTC and pick next process
     bl      timer_irq_handler
 
-    @ Restaurar contexto del siguiente proceso
-    ldmfd   sp!, {r0, r1, r2}           @ SPSR, SP_svc, LR_svc
-    msr     spsr_cxsf, r0
-    msr     cpsr_c, #0xD3               @ SVC mode
+    @ Restore next process's SVC SP/LR
+    ldr     r1, =saved_svc_sp
+    ldr     r1, [r1]
+    ldr     r2, =saved_svc_lr
+    ldr     r2, [r2]
+    msr     cpsr_c, #0xD3           @ SVC mode
     mov     sp, r1
     mov     lr, r2
-    msr     cpsr_c, #0xD2               @ IRQ mode
+    msr     cpsr_c, #0xD2           @ IRQ mode
 
-    ldmfd   sp!, {r0-r12, lr}
-    subs    pc, lr, #4                  @ ¡Regresar al siguiente proceso!
-@ =============================================================================
+    @ Restore r0-r12
+    ldr     r0, =saved_regs
+    ldmia   r0, {r0-r12}
+
+    @ Keep tasks in SVC mode: scheduler saves/restores SVC SP/LR per process.
+    @ Returning to USER here would switch to banked SP_usr (never initialized),
+    @ which can corrupt stack and eventually freeze the system.
+    mov     r0, #0x13
+    msr     spsr_cxsf, r0
+
+    @ Return to next process PC (saved_lr)
+    ldr     lr, =saved_lr
+    ldr     lr, [lr]
+    movs    pc, lr
 
 @ -----------------------------------------------------------------------------
-@ Stub handlers (sin cambios)
+@ Stub handlers
 @ -----------------------------------------------------------------------------
-undef_handler:
-    b undef_handler
-swi_handler:
-    b swi_handler
-prefetch_handler:
-    b prefetch_handler
-data_handler:
-    b data_handler
-fiq_handler:
-    b fiq_handlers
+undef_handler:    b undef_handler
+swi_handler:      b swi_handler
+prefetch_handler: b prefetch_handler
+data_handler:     b data_handler
+fiq_handler:      b fiq_handler

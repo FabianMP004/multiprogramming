@@ -13,7 +13,7 @@
  *
  * The OS PCB for P2 is initialized with:
  *   PC  = 0x82200000  (entry point)
- *   SP  = 0x82212000  (top of P2 stack — Dev B sets the initial stack frame)
+ *   SP  = 0x82212000  (top of P2 stack — sets the initial stack frame)
  * ============================================================================= */
 
 ENTRY(main)

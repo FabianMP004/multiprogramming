@@ -13,7 +13,7 @@
  *
  * The OS PCB for P1 is initialized with:
  *   PC  = 0x82100000  (entry point = first instruction of .text)
- *   SP  = 0x82112000  (top of P1 stack — Dev B sets the initial stack frame)
+ *   SP  = 0x82112000  (top of P1 stack — sets the initial stack frame)
  * ============================================================================= */
 
 ENTRY(main)

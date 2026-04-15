@@ -1,0 +1,210 @@
+
+Discarded input sections
+
+ .comment       0x00000000       0x2e os/os.o
+ .note.GNU-stack
+                0x00000000        0x0 os/os.o
+ .comment       0x00000000       0x2e os/scheduler.o
+ .note.GNU-stack
+                0x00000000        0x0 os/scheduler.o
+ .comment       0x00000000       0x2e os/processes.o
+ .note.GNU-stack
+                0x00000000        0x0 os/processes.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+OS_CODE          0x82000000         0x00010000         xrw
+OS_STACK         0x82010000         0x00002000         rw
+P1_STACK         0x82012000         0x00001000         rw
+P2_STACK         0x82013000         0x00001000         rw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+
+.vectors        0x82000000       0x3c
+ *(.vectors)
+ .vectors       0x82000000       0x3c os/root.o
+                0x82000000                _start
+
+.text           0x8200003c      0x667
+ *(.text)
+ .text          0x8200003c      0x10c os/root.o
+                0x8200003c                reset_handler
+                0x82000078                irq_handler
+ .text          0x82000148      0x180 os/os.o
+                0x82000148                uart_putc
+                0x8200016c                uart_puts
+                0x82000194                timer_irq_handler
+                0x820001c0                main
+ .text          0x820002c8      0x314 os/scheduler.o
+                0x820002c8                scheduler_init
+                0x8200038c                scheduler_current
+                0x820003b4                scheduler_start_first
+                0x82000490                scheduler_tick
+ .text          0x820005dc       0xa8 os/processes.o
+                0x820005dc                p1_entry
+                0x82000630                p2_entry
+ *(.text.*)
+ *(.rodata)
+ *(.rodata.*)
+ .rodata.str1.4
+                0x82000684       0x1f os/processes.o
+
+.glue_7         0x820006a4        0x0
+ .glue_7        0x820006a4        0x0 linker stubs
+
+.glue_7t        0x820006a4        0x0
+ .glue_7t       0x820006a4        0x0 linker stubs
+
+.vfp11_veneer   0x820006a4        0x0
+ .vfp11_veneer  0x820006a4        0x0 linker stubs
+
+.v4_bx          0x820006a4        0x0
+ .v4_bx         0x820006a4        0x0 linker stubs
+
+.iplt           0x820006a4        0x0
+ .iplt          0x820006a4        0x0 os/root.o
+
+.rel.dyn        0x820006a4        0x0
+ .rel.iplt      0x820006a4        0x0 os/root.o
+ .rel.got       0x820006a4        0x0 os/root.o
+
+.data           0x820006a4        0x4
+ *(.data)
+ .data          0x820006a4        0x0 os/root.o
+ .data          0x820006a4        0x0 os/os.o
+ .data          0x820006a4        0x4 os/scheduler.o
+ .data          0x820006a8        0x0 os/processes.o
+ *(.data.*)
+
+.igot.plt       0x820006a8        0x0
+ .igot.plt      0x820006a8        0x0 os/root.o
+
+.got            0x820006a8       0x10
+ .got           0x820006a8       0x10 os/root.o
+
+.got.plt        0x820006b8        0xc
+ .got.plt       0x820006b8        0xc os/root.o
+                0x820006b8                _GLOBAL_OFFSET_TABLE_
+
+.bss            0x820006c4      0x124
+                0x820006c4                        __bss_start__ = .
+ *(.bss)
+ .bss           0x820006c4       0x40 os/root.o
+                0x820006c4                saved_regs
+                0x820006f8                saved_lr
+                0x820006fc                saved_svc_sp
+                0x82000700                saved_svc_lr
+ .bss           0x82000704        0x0 os/os.o
+ .bss           0x82000704       0xe4 os/scheduler.o
+ .bss           0x820007e8        0x0 os/processes.o
+ *(.bss.*)
+ *(COMMON)
+                0x820007e8                        __bss_end__ = .
+
+.stack          0x82010000     0x2000
+                0x82010000                        . = ALIGN (0x8)
+                0x82010000                        __os_stack_bottom = .
+                0x82012000                        . = (. + 0x2000)
+ *fill*         0x82010000     0x2000 
+                0x82012000                        __os_stack_top = .
+
+.p1_stack       0x82012000     0x1000
+                0x82012000                        . = ALIGN (0x8)
+                0x82012000                        __p1_stack_bottom = .
+                0x82013000                        . = (. + 0x1000)
+ *fill*         0x82012000     0x1000 
+                0x82013000                        __p1_stack_top = .
+
+.p2_stack       0x82013000     0x1000
+                0x82013000                        . = ALIGN (0x8)
+                0x82013000                        __p2_stack_bottom = .
+                0x82014000                        . = (. + 0x1000)
+ *fill*         0x82013000     0x1000 
+                0x82014000                        __p2_stack_top = .
+
+/DISCARD/
+ *(.comment)
+ *(.note*)
+LOAD os/root.o
+LOAD os/os.o
+LOAD os/scheduler.o
+LOAD os/processes.o
+OUTPUT(os/os.elf elf32-littlearm)
+LOAD linker stubs
+
+.ARM.attributes
+                0x00000000       0x2d
+ .ARM.attributes
+                0x00000000       0x1d os/root.o
+ .ARM.attributes
+                0x0000001d       0x31 os/os.o
+ .ARM.attributes
+                0x0000004e       0x31 os/scheduler.o
+ .ARM.attributes
+                0x0000007f       0x31 os/processes.o
+
+.debug_line     0x00000000      0x64a
+ .debug_line    0x00000000       0xb3 os/root.o
+ .debug_line    0x000000b3      0x20c os/os.o
+ .debug_line    0x000002bf      0x2dc os/scheduler.o
+ .debug_line    0x0000059b       0xaf os/processes.o
+
+.debug_line_str
+                0x00000000       0x4b
+ .debug_line_str
+                0x00000000       0x4b os/root.o
+
+.debug_info     0x00000000      0x74b
+ .debug_info    0x00000000       0x23 os/root.o
+ .debug_info    0x00000023      0x295 os/os.o
+ .debug_info    0x000002b8      0x3c1 os/scheduler.o
+ .debug_info    0x00000679       0xd2 os/processes.o
+
+.debug_abbrev   0x00000000      0x488
+ .debug_abbrev  0x00000000       0x12 os/root.o
+ .debug_abbrev  0x00000012      0x1b6 os/os.o
+ .debug_abbrev  0x000001c8      0x201 os/scheduler.o
+ .debug_abbrev  0x000003c9       0xbf os/processes.o
+
+.debug_aranges  0x00000000       0x88
+ .debug_aranges
+                0x00000000       0x28 os/root.o
+ .debug_aranges
+                0x00000028       0x20 os/os.o
+ .debug_aranges
+                0x00000048       0x20 os/scheduler.o
+ .debug_aranges
+                0x00000068       0x20 os/processes.o
+
+.debug_str      0x00000000      0x2bd
+ .debug_str     0x00000000      0x2bd os/root.o
+                                 0x57 (size before relaxing)
+ .debug_str     0x000002bd      0x22e os/os.o
+ .debug_str     0x000002bd      0x230 os/scheduler.o
+ .debug_str     0x000002bd       0xef os/processes.o
+
+.debug_rnglists
+                0x00000000       0x6e
+ .debug_rnglists
+                0x00000000       0x1a os/root.o
+ .debug_rnglists
+                0x0000001a       0x17 os/os.o
+ .debug_rnglists
+                0x00000031       0x22 os/scheduler.o
+ .debug_rnglists
+                0x00000053       0x1b os/processes.o
+
+.debug_loclists
+                0x00000000      0x138
+ .debug_loclists
+                0x00000000       0x67 os/os.o
+ .debug_loclists
+                0x00000067       0xd1 os/scheduler.o
+
+.debug_frame    0x00000000      0x108
+ .debug_frame   0x00000000       0x68 os/os.o
+ .debug_frame   0x00000068       0x60 os/scheduler.o
+ .debug_frame   0x000000c8       0x40 os/processes.o

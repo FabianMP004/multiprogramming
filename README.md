@@ -1,3 +1,17 @@
+```
+wsl
+make clean
+make all
+```
+
+loady 0x82000000   (send OS/os.bin)
+loady 0x82100000   (send P1/p1.bin)
+loady 0x82200000   (send P2/p2.bin)
+go 0x82000000
+
+----------------------------------------------------------------------------------------
+
+
 # Multiprogramming OS — BeagleBone Black (AM335x)
 
 Bare-metal multiprogramming system: OS + 2 user processes with Round-Robin scheduling.

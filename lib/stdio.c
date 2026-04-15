@@ -1,115 +1,190 @@
-/* ============================================================
- * lib/stdio.c
- * Autor : Dev B
- * Fase  : 1
- *
- * Implementación de las funciones de formato numérico.
- * uart_putc() y uart_puts() las provee Dev A en OS/os.c.
- * ============================================================ */
-
 #include "stdio.h"
 
-/* ============================================================
- * print_uint()
- *   Imprime un entero sin signo en decimal.
- *
- * Algoritmo:
- *   No se puede imprimir de izquierda a derecha directamente
- *   porque no sabemos cuántos dígitos hay.  En cambio:
- *     1. Extraer dígitos de derecha a izquierda con % 10
- *        y guardarlos en un buffer temporal.
- *     2. Imprimir el buffer al revés.
- *
- *   Ejemplo con value = 345:
- *     345 % 10 = 5  → buf[0] = '5',  value = 34
- *      34 % 10 = 4  → buf[1] = '4',  value = 3
- *       3 % 10 = 3  → buf[2] = '3',  value = 0
- *     Imprimir: buf[2] buf[1] buf[0] → "345"
- * ============================================================ */
+typedef __builtin_va_list va_list;
+#define va_start(ap, last) __builtin_va_start(ap, last)
+#define va_arg(ap, type)   __builtin_va_arg(ap, type)
+#define va_end(ap)         __builtin_va_end(ap)
+
+#define UART0_BASE      0x44E09000U
+#define UART_THR        0x00
+#define UART_LSR        0x14
+#define UART_LSR_THRE   (1 << 5)
+
+#define REG(base, offset) (*((volatile unsigned int *)((base) + (offset))))
+
+static inline unsigned int irq_save_disable(void)
+{
+    unsigned int cpsr;
+    __asm__ volatile (
+        "mrs %0, cpsr      \n"
+        "orr r1, %0, #0x80 \n"
+        "msr cpsr_c, r1    \n"
+        : "=r"(cpsr)
+        :
+        : "r1", "memory"
+    );
+    return cpsr;
+}
+
+static inline void irq_restore(unsigned int cpsr)
+{
+    __asm__ volatile (
+        "msr cpsr_c, %0\n"
+        :
+        : "r"(cpsr)
+        : "memory"
+    );
+}
+
+void uart_putc(char c)
+{
+    while (!(REG(UART0_BASE, UART_LSR) & UART_LSR_THRE))
+        ;
+    REG(UART0_BASE, UART_THR) = (unsigned int)c;
+}
+
+void uart_puts(const char *s)
+{
+    while (s && *s)
+        uart_putc(*s++);
+}
+
+static char *append_char(char *dst, char c, char *end)
+{
+    if (dst < end) *dst++ = c;
+    return dst;
+}
+
+static char *append_str(char *dst, const char *src, char *end)
+{
+    if (!src) src = "(null)";
+    while (*src && dst < end) *dst++ = *src++;
+    return dst;
+}
+
+static char *append_uint(char *dst, unsigned int v, char *end)
+{
+    char tmp[11];
+    int ti = 0;
+
+    if (v == 0) {
+        if (dst < end) *dst++ = '0';
+        return dst;
+    }
+
+    while (v != 0 && ti < (int)sizeof(tmp)) {
+        tmp[ti++] = (char)('0' + (v % 10));
+        v /= 10;
+    }
+    while (ti-- > 0 && dst < end) *dst++ = tmp[ti];
+    return dst;
+}
+
+static char *append_int(char *dst, int v, char *end)
+{
+    if (v < 0) {
+        if (dst < end) *dst++ = '-';
+        unsigned int u = (unsigned int)(-(v + 1)) + 1u;
+        return append_uint(dst, u, end);
+    } else {
+        return append_uint(dst, (unsigned int)v, end);
+    }
+}
+
+void PRINT(const char *fmt, ...)
+{
+    char out[192];
+    char *p = out;
+    char *end = out + sizeof(out) - 1;
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    const char *s = fmt;
+    while (*s != '\0' && p < end) {
+        if (*s != '%') {
+            *p++ = *s++;
+            continue;
+        }
+
+        s++;
+        if (*s == '\0') break;
+
+        switch (*s) {
+        case 'd': {
+            int v = va_arg(ap, int);
+            p = append_int(p, v, end);
+            break;
+        }
+        case 'u': {
+            unsigned int v = va_arg(ap, unsigned int);
+            p = append_uint(p, v, end);
+            break;
+        }
+        case 'c': {
+            int c = va_arg(ap, int);
+            p = append_char(p, (char)c, end);
+            break;
+        }
+        case 's': {
+            const char *str = va_arg(ap, const char *);
+            p = append_str(p, str, end);
+            break;
+        }
+        case '%': {
+            p = append_char(p, '%', end);
+            break;
+        }
+        default: {
+            p = append_char(p, '%', end);
+            p = append_char(p, *s, end);
+            break;
+        }
+        }
+        s++;
+    }
+
+    *p = '\0';
+    va_end(ap);
+
+    unsigned int flags = irq_save_disable();
+    uart_puts(out);
+    irq_restore(flags);
+}
+
 void print_uint(unsigned int value)
 {
-    /* Buffer para los dígitos.
-     * Un unsigned int tiene máximo 10 dígitos decimales. */
-    char buf[10];
-    int  i = 0;
-
-    /* Caso especial: el valor es exactamente 0 */
-    if (value == 0) {
-        uart_putc('0');
-        return;
-    }
-
-    /* Extraer dígitos de derecha a izquierda */
-    while (value > 0) {
-        buf[i] = '0' + (char)(value % 10);
-        i++;
-        value = value / 10;
-    }
-
-    /* Imprimir los dígitos de derecha a izquierda del buffer
-     * (que es de izquierda a derecha del número) */
-    while (i > 0) {
-        i--;
-        uart_putc(buf[i]);
-    }
+    char buf[16];
+    char *p = buf;
+    char *end = buf + sizeof(buf) - 1;
+    p = append_uint(p, value, end);
+    *p = '\0';
+    uart_puts(buf);
 }
 
-/* ============================================================
- * print_int()
- *   Imprime un entero con signo en decimal.
- *
- *   Si es negativo imprime '-' y luego el valor absoluto.
- *   El cast especial maneja el caso de INT_MIN (-2147483648)
- *   que no tiene representación positiva en int.
- * ============================================================ */
 void print_int(int value)
 {
-    if (value < 0) {
-        uart_putc('-');
-        /* Convertir a unsigned evitando overflow con INT_MIN */
-        print_uint((unsigned int)(-(value + 1)) + 1u);
-    } else {
-        print_uint((unsigned int)value);
-    }
+    char buf[24];
+    char *p = buf;
+    char *end = buf + sizeof(buf) - 1;
+    p = append_int(p, value, end);
+    *p = '\0';
+    uart_puts(buf);
 }
 
-/* ============================================================
- * print_hex()
- *   Imprime un entero sin signo en hexadecimal.
- *   Siempre imprime 8 dígitos con prefijo "0x".
- *
- * Algoritmo:
- *   Un unsigned int tiene 32 bits = 8 nibbles (4 bits c/u).
- *   Extraer cada nibble de más significativo a menos:
- *     nibble 7 = bits 31-28
- *     nibble 6 = bits 27-24
- *     ...
- *     nibble 0 = bits 3-0
- *
- *   Ejemplo con value = 0x402F0400:
- *     nibble 7 = 4 → '4'
- *     nibble 6 = 0 → '0'
- *     nibble 5 = 2 → '2'
- *     nibble 4 = F → 'F'
- *     nibble 3 = 0 → '0'
- *     nibble 2 = 4 → '4'
- *     nibble 1 = 0 → '0'
- *     nibble 0 = 0 → '0'
- *     Resultado: "0x402F0400"
- * ============================================================ */
 void print_hex(unsigned int value)
 {
-    /* Tabla de conversión de nibble a carácter hex */
-    const char hex_chars[] = "0123456789ABCDEF";
-    int i;
+    const char hex[] = "0123456789ABCDEF";
+    char out[11];
+    char *p = out;
+    char *end = out + sizeof(out) - 1;
 
-    /* Prefijo hexadecimal */
-    uart_putc('0');
-    uart_putc('x');
-
-    /* Imprimir 8 nibbles del más significativo al menos */
-    for (i = 7; i >= 0; i--) {
-        unsigned int nibble = (value >> (i * 4)) & 0xF;
-        uart_putc(hex_chars[nibble]);
+    p = append_char(p, '0', end);
+    p = append_char(p, 'x', end);
+    for (int i = 7; i >= 0 && p < end; --i) {
+        unsigned int nib = (value >> (i * 4)) & 0xF;
+        p = append_char(p, hex[nib], end);
     }
+    *p = '\0';
+    uart_puts(out);
 }

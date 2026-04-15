@@ -1,47 +1,31 @@
-/* =============================================================================
- * os.h — Shared OS header
- *
- * Included by:
- *   - os.c          (defines the globals)
- *   - Dev B's scheduler/PCB code (reads/writes globals)
- *   - Dev B's stdio.c / string.c (uses uart_putc / uart_puts)
- *
- * Dev A defines everything in this file.
- * Dev B should NOT modify os.h — only add their own header (e.g. pcb.h).
- * ============================================================================= */
-
-
 #ifndef OS_H
 #define OS_H
 
-/* ---------------------------------------------------------------------------
- * Globals shared between root.s IRQ handler and the C scheduler (Dev B)
+/* --------------------------------------------------------------------------
+ * Globals shared between root.s IRQ handler and the C scheduler
  *
  * root.s saves/restores these directly by symbol name.
- * Dev B's timer_irq_handler() reads them (to save current PCB) and writes
+ * timer_irq_handler() reads them (to save current PCB) and writes
  * them (to set up the next PCB to be restored).
- * ------------------------------------------------------------------------- */
-extern unsigned int saved_regs[13];  /* R0-R12 of interrupted process        */
-extern unsigned int saved_lr;        /* LR_irq (= interrupted PC + 4)        */
+ * -------------------------------------------------------------------------- */
+extern unsigned int saved_regs[13];  /* R0-R12 of interrupted process         */
+extern unsigned int saved_lr;        /* LR_irq (= interrupted PC + 4)         */
 extern unsigned int saved_svc_sp;    /* SVC stack pointer of interrupted proc */
 extern unsigned int saved_svc_lr;    /* SVC link register of interrupted proc */
 
 /* ---------------------------------------------------------------------------
- * UART helpers (implemented in os.c, used by Dev B's stdio.c)
- * ------------------------------------------------------------------------- */
+ * UART helpers (implemented in os.c, used by stdio.c)
+ * --------------------------------------------------------------------------- */
 void uart_putc(char c);
 void uart_puts(const char *s);
 
 /* ---------------------------------------------------------------------------
- * Timer IRQ handler — declared here, STUB in os.c, IMPLEMENTED by Dev B
- * Dev B replaces the body of this function (in os.c or their own .c file
- * that they link in place of the stub).
+ * Timer IRQ handler — declared here, STUB in os.c
  * ------------------------------------------------------------------------- */
 void timer_irq_handler(void);
 
 /* ---------------------------------------------------------------------------
- * Process state enum — used by Dev B in pcb.h / scheduler
- * Defined here so it is available to everyone.
+ * Process state enum — used in pcb.h / scheduler
  * ------------------------------------------------------------------------- */
 typedef enum {
     PROC_READY   = 0,
@@ -50,7 +34,7 @@ typedef enum {
 } proc_state_t;
 
 /* ---------------------------------------------------------------------------
- * Memory map constants — used by linker scripts and Dev B's PCB init
+ * Memory map constants — used by linker scripts and PCB init
  * ------------------------------------------------------------------------- */
 #define OS_BASE         0x82000000U
 #define OS_STACK_TOP    0x82012000U   /* top of 8 KB OS stack                */

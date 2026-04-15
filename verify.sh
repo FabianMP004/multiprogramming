@@ -1,26 +1,4 @@
 #!/bin/bash
-# =============================================================================
-# verify.sh — Dev A verification script
-#
-# Checks everything Dev A is responsible for WITHOUT needing a BeagleBone:
-#   1. Cross-compiler is installed
-#   2. All three images build successfully
-#   3. OS entry point is exactly 0x82000000
-#   4. IRQ vector (offset 0x18) contains a branch to irq_handler
-#   5. __bss_start__ and __bss_end__ symbols exist
-#   6. saved_regs, saved_lr, saved_svc_sp, saved_svc_lr exist (for Dev B)
-#   7. OS stack top symbol is at 0x82012000
-#   8. P1 entry point is exactly 0x82100000
-#   9. P2 entry point is exactly 0x82200000
-#  10. No regions overlap in memory
-#  11. QEMU smoke test (if qemu-system-arm is available)
-#
-# Usage:
-#   chmod +x verify.sh
-#   ./verify.sh
-#
-# Expected output: all checks print OK. Any FAIL means something is wrong.
-# =============================================================================
 
 set -euo pipefail
 
@@ -45,7 +23,7 @@ sym_addr() {
 
 # =============================================================================
 echo "=============================================="
-echo " Dev A Verification Script"
+echo " Verification Script"
 echo " BeagleBone Black — Multiprogramming OS"
 echo "=============================================="
 
@@ -106,14 +84,14 @@ else
     fail "__bss_end__ not found in OS ELF"
 fi
 
-# 6. Context switch globals (Dev B depends on these)
-info "6. Context switch globals (needed by Dev B)"
+# 6. Context switch globals
+info "6. Context switch globals"
 for sym in saved_regs saved_lr saved_svc_sp saved_svc_lr; do
     ADDR=$(sym_addr OS/os.elf "$sym")
     if [ -n "$ADDR" ] && [ "$ADDR" != "0x" ]; then
         ok "$sym = $ADDR"
     else
-        fail "$sym not found — Dev B cannot do context switch"
+        fail "$sym not found — cannot do context switch"
     fi
 done
 
@@ -188,14 +166,14 @@ echo "=============================================="
 if [ $FAIL -eq 0 ]; then
     echo ""
     echo " All checks passed!"
-    echo " Safe to push to GitHub for Dev B and Dev C."
+    echo " Safe to push to GitHub"
     echo ""
     echo " Files to commit:"
     echo "   OS/root.s     OS/os.c     OS/os.h"
     echo "   OS/os.ld      P1/p1.ld    P2/p2.ld"
     echo "   Makefile      verify.sh"
     echo ""
-    echo " Stubs to commit (Dev B/C will replace):"
+    echo " Stubs to commit:"
     echo "   P1/main.c     P2/main.c"
     echo "   lib/stdio.h   lib/stdio.c"
     echo "   lib/string.h  lib/string.c"

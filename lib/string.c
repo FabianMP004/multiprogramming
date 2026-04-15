@@ -1,12 +1,3 @@
-/* ============================================================
- * lib/string.c
- * Autor : Dev B
- * Fase  : 1
- *
- * Implementación de funciones de string y memoria.
- * Cero dependencias de libc.
- * ============================================================ */
-
 #include "string.h"
 
 /* ============================================================
@@ -47,8 +38,6 @@ int str_cmp(const char *a, const char *b)
         a++;
         b++;
     }
-    /* Cast a unsigned char para comparación correcta de
-     * caracteres con valores > 127 */
     return (int)((unsigned char)*a) - (int)((unsigned char)*b);
 }
 
@@ -78,13 +67,11 @@ char *str_ncpy(char *dst, const char *src, unsigned int n)
 {
     char *ret = dst;
 
-    /* Copiar mientras hay fuente y no llegamos al límite */
     while (n > 0 && *src != '\0') {
         *dst++ = *src++;
         n--;
     }
 
-    /* Rellenar el resto con '\0' */
     while (n > 0) {
         *dst++ = '\0';
         n--;
@@ -106,15 +93,12 @@ char *str_ncpy(char *dst, const char *src, unsigned int n)
 char *str_cat(char *dst, const char *src)
 {
     char *ret = dst;
-
-    /* Avanzar hasta el final de dst */
+    
     while (*dst) {
         dst++;
     }
 
-    /* Copiar src desde el '\0' de dst en adelante */
     while ((*dst++ = *src++) != '\0');
-
     return ret;
 }
 
