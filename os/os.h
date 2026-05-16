@@ -1,6 +1,3 @@
-
-Copiar
-
 /* =============================================================================
  * os.h — Shared OS header
  *
@@ -12,7 +9,6 @@ Copiar
  *   - scheduler.c   (Dev B lee/escribe los globals)
  *   - stdio.c       (Dev B usa uart_putc/uart_puts)
  * ============================================================================= */
- 
 #ifndef OS_H
 #define OS_H
  

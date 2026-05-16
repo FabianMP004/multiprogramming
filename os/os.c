@@ -1,6 +1,3 @@
-
-Copiar
-
 /* =============================================================================
  * os.c — Operating System: Hardware Initialization
  *

@@ -1,22 +1,21 @@
 /* =============================================================================
- * p1/main.c  —  User Process 1 (Dev C)
- * Imprime dígitos 0-9 en bucle infinito
+ * p1/main.c  —  User Task A  (Fase 2: Execution Modes and Syscalls)
+ *
+ * Corre en modo USR (ARM unprivileged, CPSR[4:0] = 0x10).
+ * Cede el CPU con sys_yield() → svc #0 → kernel → scheduler RR.
+ * g_a_yields es volatile: observable desde el debugger sin optimizar.
+ *
+ * Reemplaza el p1/main.c de Fase 1 (que usaba PRINT + delays).
  * ============================================================================= */
 
-#include "os.h"
-#include "stdio.h"
+#include "user_syscalls.h"   /* compilar con -I os para encontrar este header */
+
+volatile uint32_t g_a_yields;
 
 int main(void)
 {
-    int i = 0;
-
-    while (1) {
-        PRINT("----From P1: %d\r\n", i);
-        i = (i + 1) % 10;
-
-        /* Delay para que se vea el interleaving con P2 */
-        for (volatile int d = 0; d < 200000; ++d);
+    for (;;) {
+        g_a_yields++;
+        (void)sys_yield();
     }
-
-    return 0;   /* Nunca llega aquí */
 }
