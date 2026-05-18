@@ -68,8 +68,16 @@ SECTIONS
     {
         . = ALIGN(8);
         __os_stack_bottom = .;
-        . += 0x2000;           /* 8 KB */
+        . += 0x1800;           /* 6 KB for SVC stack */
         __os_stack_top = .;
+    } > OS_STACK
+
+    .irq_stack (NOLOAD) :
+    {
+        . = ALIGN(8);
+        __irq_stack_bottom = .;
+        . += 0x0800;           /* 2 KB for IRQ stack */
+        __irq_stack_top = .;
     } > OS_STACK
 
     /* Discard debug info to keep binary small */

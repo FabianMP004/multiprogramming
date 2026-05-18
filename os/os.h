@@ -1,7 +1,7 @@
 /* =============================================================================
  * os.h — Shared OS header
  *
- * FASE 2: agregados saved_spsr, launch_first_task(), svc_dispatch()
+ * saved_spsr, launch_first_task(), svc_dispatch()
  *
  * Incluido por:
  *   - os.c          (define los globals)
@@ -13,7 +13,7 @@
 #define OS_H
  
 /* ---------------------------------------------------------------------------
- * Globals compartidos entre root.s y el scheduler de Dev B
+ * Globals compartidos entre root.s y el scheduler
  *
  * TRAP FRAME — llenados por root.s al entrar a IRQ o SVC:
  * ------------------------------------------------------------------------- */
@@ -24,30 +24,41 @@ extern unsigned int saved_svc_lr;    /* LR_usr del proceso (vía SYS mode)    */
 extern unsigned int saved_spsr;      /* CPSR del proceso (USR=0x10) — NUEVO  */
  
 /* ---------------------------------------------------------------------------
- * UART helpers (implementados en os.c)
+ * UART helpers 
  * ------------------------------------------------------------------------- */
 void uart_putc(char c);
 void uart_puts(const char *s);
+void uart_put_uint(unsigned int n);
+
+/* Trazas MODE_SWITCH — llamadas desde root.s (PID vía g_current_pid) */
+void trace_initial_launch(void);
+void trace_user_to_kernel_irq(void);
+void trace_kernel_to_user_dispatch(void);
+void trace_user_to_kernel_svc(void);
+void trace_kernel_to_user_svc(void);
  
 /* ---------------------------------------------------------------------------
- * Funciones del kernel (implementadas en root.s / os.c)
+ * Funciones del kernel
  * ------------------------------------------------------------------------- */
  
-/* Fase 1: handler del timer — Dev B implementa el cuerpo */
+/* Handler del timer */
 void timer_irq_handler(void);
  
-/* Fase 2 NUEVO: transición kernel → primer proceso en USR mode
+/* Transición kernel → primer proceso en USR mode
  * Llamada desde main() después de scheduler_init() y cpu_irq_enable().
  * No retorna. */
 void launch_first_task(void);
  
-/* Fase 2 NUEVO: dispatcher de syscalls — Dev B implementa
+/* Dispatcher de syscalls
  * Lee saved_regs[0] como ID, ejecuta la syscall, escribe resultado
  * en saved_regs[0] y actualiza todos los saved_* con el siguiente proceso. */
 void svc_dispatch(void);
+
+/* Busy-wait delay for ~1 second (1 GHz) */
+void delay_1s(void);
  
 /* ---------------------------------------------------------------------------
- * Estados de proceso — usados por Dev B en el scheduler
+ * Estados de proceso
  * ------------------------------------------------------------------------- */
 typedef enum {
     PROC_READY   = 0,
@@ -56,7 +67,7 @@ typedef enum {
 } proc_state_t;
  
 /* ---------------------------------------------------------------------------
- * Memory map — usado por linker scripts y scheduler (Dev B)
+ * Memory map — usado por linker scripts y scheduler
  * ------------------------------------------------------------------------- */
 #define OS_BASE         0x82000000U
 #define OS_STACK_TOP    0x82012000U

@@ -113,3 +113,21 @@ void print_hex(unsigned int value)
         uart_putc(hex_chars[nibble]);
     }
 }
+
+/* ============================================================
+ * PRINT_char()
+ *   Imprime un solo carácter
+ * ============================================================ */
+void PRINT_char(char c)
+{
+    uart_putc(c);
+}
+
+/* ============================================================
+ * PRINT_int()
+ *   Imprime un entero con signo
+ * ============================================================ */
+void PRINT_int(int value)
+{
+    print_int(value);
+}

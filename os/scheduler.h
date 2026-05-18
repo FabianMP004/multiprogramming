@@ -1,7 +1,6 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include <stdint.h>
 #include "os.h"
 
 #define PID_OS     0
@@ -9,13 +8,16 @@
 #define PID_P2     2
 #define NUM_PROCS  3
 
+/* Proceso actual (1=P1, 2=P2) — trazas MODE_SWITCH y depuración */
+extern unsigned int g_current_pid;
+
 typedef struct {
-    uint32_t pid;
-    uint32_t pc;
-    uint32_t sp;
-    uint32_t lr;
-    uint32_t spsr;
-    uint32_t r[13];
+    unsigned int pid;
+    unsigned int pc;
+    unsigned int sp;
+    unsigned int lr;
+    unsigned int spsr;
+    unsigned int r[13];
     proc_state_t state;
 } pcb_t;
 
@@ -28,7 +30,10 @@ pcb_t *scheduler_current(void);
 /* Called from the IRQ timer handler: do save/restore + select next */
 void scheduler_tick(void);
 
-/* Opcional: pre-load saved_* for first process so early IRQ returns into it */
+/* Pre-load saved_* for launch_first_task() / early IRQ */
 void scheduler_start_first(void);
+
+/* Called from svc_handler in root.s */
+void svc_dispatch(void);
 
 #endif /* SCHEDULER_H */

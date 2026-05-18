@@ -1,12 +1,12 @@
 # =============================================================================
 # Makefile — BeagleBone Black Multiprogramming OS  (Fase 1 + Fase 2)
 #
-# Builds cuatro imágenes independientes:
+# Builds tres imágenes independientes:
 #   os/os.bin  — kernel, linked at 0x82000000
 #   p1/p1.bin  — Task A (USR mode, SYS_YIELD), linked at 0x82100000
 #   p2/p2.bin  — Task B (USR mode, SYS_YIELD), linked at 0x82200000
 #
-# Cross-compiler: arm-linux-gnueabihf-  (adjust CROSS if yours differs)
+# Cross-compiler: arm-none-eabi-  (adjust CROSS if yours differs)
 # Install on Ubuntu/Debian:
 #   sudo apt-get install gcc-arm-linux-gnueabihf binutils-arm-linux-gnueabihf
 # =============================================================================
@@ -25,6 +25,12 @@ CFLAGS   = -mcpu=cortex-a8 -marm \
             -mfloat-abi=soft \
             -ffreestanding -nostdlib -nostdinc \
             -Wall -Wextra -O1 -g
+
+# P1/P2: -I os for user_syscalls.h; allow stdint.h (no -nostdinc)
+USER_CFLAGS = -mcpu=cortex-a8 -marm \
+            -mfloat-abi=soft \
+            -ffreestanding -nostdlib \
+            -Wall -Wextra -O1 -g -I os
 
 # Assembler flags
 ASFLAGS  = -mcpu=cortex-a8
@@ -45,7 +51,7 @@ OS_MAP   = os/os.map
 
 # =============================================================================
 # P1 image — Task A en USR mode (Fase 2)
-# Ya no usa lib/stdio ni lib/string — solo stdint.h y svc #0
+# Usa syscalls directamente (sin lib/stdio)
 # =============================================================================
 P1_SRCS  = p1/main.c
 P1_OBJS  = p1/main.o
@@ -55,6 +61,7 @@ P1_BIN   = p1/p1.bin
 
 # =============================================================================
 # P2 image — Task B en USR mode (Fase 2)
+# Usa syscalls directamente (sin lib/stdio)
 # =============================================================================
 P2_SRCS  = p2/main.c
 P2_OBJS  = p2/main.o
@@ -62,9 +69,6 @@ P2_LD    = p2/p2.ld
 P2_ELF   = p2/p2.elf
 P2_BIN   = p2/p2.bin
 
-# =============================================================================
-# Default target
-# =============================================================================
 .PHONY: all clean os p1 p2 verify disasm uboot
 
 all: os p1 p2
@@ -99,8 +103,8 @@ $(OS_BIN): $(OS_ELF)
 # =============================================================================
 p1: $(P1_BIN)
 
-p1/main.o: p1/main.c
-	$(CC) $(CFLAGS) -c $< -o $@
+p1/main.o: p1/main.c os/user_syscalls.h
+	$(CC) $(USER_CFLAGS) -c $< -o $@
 
 $(P1_ELF): $(P1_OBJS) $(P1_LD)
 	$(LD) $(LDFLAGS) -T $(P1_LD) -o $@ $(P1_OBJS)
@@ -115,7 +119,7 @@ $(P1_BIN): $(P1_ELF)
 p2: $(P2_BIN)
 
 p2/main.o: p2/main.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(USER_CFLAGS) -c $< -o $@
 
 $(P2_ELF): $(P2_OBJS) $(P2_LD)
 	$(LD) $(LDFLAGS) -T $(P2_LD) -o $@ $(P2_OBJS)
@@ -169,12 +173,15 @@ disasm: all
 uboot:
 	@echo ""
 	@echo "=== U-Boot load commands ==="
-	@echo "Run these in the U-Boot console (serial terminal):"
 	@echo ""
-	@echo "  loady 0x82000000   # then send os/os.bin via Ymodem"
-	@echo "  loady 0x82100000   # then send p1/p1.bin via Ymodem"
-	@echo "  loady 0x82200000   # then send p2/p2.bin via Ymodem"
-	@echo "  go    0x82000000   # start execution"
+	@echo "--- Cargar tres binarios separados ---"
+	@echo "  loady 0x82000000   # enviar os/os.bin por Ymodem"
+	@echo "  loady 0x82100000   # enviar p1/p1.bin por Ymodem"
+	@echo "  loady 0x82200000   # enviar p2/p2.bin por Ymodem"
+	@echo "  go    0x82000000"
+	@echo ""
+	@echo "NOTA: los TRES loady son obligatorios."
+	@echo "Si falta p1.bin o p2.bin en memoria -> Data Abort."
 	@echo ""
 
 # =============================================================================

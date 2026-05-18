@@ -1,0 +1,185 @@
+
+Discarded input sections
+
+ .comment       0x00000000       0x27 os/os.o
+ .comment       0x00000000       0x27 os/scheduler.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+OS_CODE          0x82000000         0x00010000         xrw
+OS_STACK         0x82010000         0x00002000         rw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+
+.vectors        0x82000000       0x3c
+ *(.vectors)
+ .vectors       0x82000000       0x3c os/root.o
+                0x82000000                _start
+
+.text           0x8200003c      0xe2a
+ *(.text)
+ .text          0x8200003c      0x2e0 os/root.o
+                0x8200003c                reset_handler
+                0x820000a4                launch_first_task
+                0x820000d8                irq_handler
+                0x820001a4                svc_handler
+ .text          0x8200031c      0x4f8 os/os.o
+                0x8200031c                uart_putc
+                0x82000340                uart_puts
+                0x82000468                uart_put_uint
+                0x820004ec                trace_initial_launch
+                0x82000514                trace_user_to_kernel_irq
+                0x8200053c                trace_kernel_to_user_dispatch
+                0x82000564                trace_user_to_kernel_svc
+                0x8200058c                trace_kernel_to_user_svc
+                0x820005b4                timer_irq_handler_body
+                0x820005e8                timer_irq_handler
+                0x82000608                main
+                0x820007e4                delay_1s
+ .text          0x82000814      0x478 os/scheduler.o
+                0x82000814                scheduler_init
+                0x820008d8                scheduler_current
+                0x820008f8                scheduler_start_first
+                0x82000968                scheduler_tick
+                0x82000a94                svc_dispatch_body
+                0x82000c68                svc_dispatch
+ *(.text.*)
+ *(.rodata)
+ *(.rodata.*)
+ .rodata.str1.4
+                0x82000c8c      0x1da os/os.o
+                                0x1b6 (size before relaxing)
+ .rodata.str1.4
+                0x82000e66       0x22 os/scheduler.o
+
+.glue_7         0x82000e68        0x0
+ .glue_7        0x82000e68        0x0 linker stubs
+
+.glue_7t        0x82000e68        0x0
+ .glue_7t       0x82000e68        0x0 linker stubs
+
+.vfp11_veneer   0x82000e68        0x0
+ .vfp11_veneer  0x82000e68        0x0 linker stubs
+
+.v4_bx          0x82000e68        0x0
+ .v4_bx         0x82000e68        0x0 linker stubs
+
+.iplt           0x82000e68        0x0
+ .iplt          0x82000e68        0x0 os/root.o
+
+.rel.dyn        0x82000e68        0x0
+ .rel.iplt      0x82000e68        0x0 os/root.o
+
+.data           0x82000e68       0x6c
+ *(.data)
+ .data          0x82000e68       0x66 os/root.o
+ .data          0x82000ece        0x0 os/os.o
+ *fill*         0x82000ece        0x2 
+ .data          0x82000ed0        0x4 os/scheduler.o
+                0x82000ed0                g_current_pid
+ *(.data.*)
+
+.igot.plt       0x82000ed4        0x0
+ .igot.plt      0x82000ed4        0x0 os/root.o
+
+.bss            0x82000ed4      0x178
+                0x82000ed4                        __bss_start__ = .
+ *(.bss)
+ .bss           0x82000ed4        0x0 os/root.o
+ .bss           0x82000ed4       0x90 os/os.o
+                0x82000f24                saved_svc_lr
+                0x82000f28                saved_svc_sp
+                0x82000f2c                saved_lr
+                0x82000f30                saved_regs
+ .bss           0x82000f64       0xe8 os/scheduler.o
+                0x82001048                saved_spsr
+ *(.bss.*)
+ *(COMMON)
+                0x8200104c                        __bss_end__ = .
+
+.stack          0x82010000     0x1800
+                0x82010000                        . = ALIGN (0x8)
+                0x82010000                        __os_stack_bottom = .
+                0x82011800                        . = (. + 0x1800)
+ *fill*         0x82010000     0x1800 
+                0x82011800                        __os_stack_top = .
+
+.irq_stack      0x82011800      0x800
+                0x82011800                        . = ALIGN (0x8)
+                0x82011800                        __irq_stack_bottom = .
+                0x82012000                        . = (. + 0x800)
+ *fill*         0x82011800      0x800 
+                0x82012000                        __irq_stack_top = .
+
+/DISCARD/
+ *(.comment)
+ *(.note*)
+LOAD os/root.o
+LOAD os/os.o
+LOAD os/scheduler.o
+OUTPUT(os/os.elf elf32-littlearm)
+LOAD linker stubs
+
+.ARM.attributes
+                0x00000000       0x2d
+ .ARM.attributes
+                0x00000000       0x1d os/root.o
+ .ARM.attributes
+                0x0000001d       0x31 os/os.o
+ .ARM.attributes
+                0x0000004e       0x31 os/scheduler.o
+
+.debug_line     0x00000000      0x850
+ .debug_line    0x00000000      0x131 os/root.o
+ .debug_line    0x00000131      0x356 os/os.o
+ .debug_line    0x00000487      0x3c9 os/scheduler.o
+
+.debug_line_str
+                0x00000000       0x4b
+ .debug_line_str
+                0x00000000       0x4b os/root.o
+
+.debug_info     0x00000000      0xb8b
+ .debug_info    0x00000000       0x23 os/root.o
+ .debug_info    0x00000023      0x622 os/os.o
+ .debug_info    0x00000645      0x546 os/scheduler.o
+
+.debug_abbrev   0x00000000      0x52d
+ .debug_abbrev  0x00000000       0x12 os/root.o
+ .debug_abbrev  0x00000012      0x2a3 os/os.o
+ .debug_abbrev  0x000002b5      0x278 os/scheduler.o
+
+.debug_aranges  0x00000000       0x68
+ .debug_aranges
+                0x00000000       0x28 os/root.o
+ .debug_aranges
+                0x00000028       0x20 os/os.o
+ .debug_aranges
+                0x00000048       0x20 os/scheduler.o
+
+.debug_str      0x00000000      0x3cd
+ .debug_str     0x00000000      0x3cd os/root.o
+                                 0x57 (size before relaxing)
+ .debug_str     0x000003cd      0x2c2 os/os.o
+ .debug_str     0x000003cd      0x299 os/scheduler.o
+
+.debug_rnglists
+                0x00000000       0x30
+ .debug_rnglists
+                0x00000000       0x1a os/root.o
+ .debug_rnglists
+                0x0000001a       0x16 os/os.o
+
+.debug_loclists
+                0x00000000      0x411
+ .debug_loclists
+                0x00000000      0x2de os/os.o
+ .debug_loclists
+                0x000002de      0x133 os/scheduler.o
+
+.debug_frame    0x00000000      0x1e8
+ .debug_frame   0x00000000      0x164 os/os.o
+ .debug_frame   0x00000164       0x84 os/scheduler.o

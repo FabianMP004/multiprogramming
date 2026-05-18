@@ -22,10 +22,10 @@ void uart_putc(char c);
 void uart_puts(const char *s);
 
 /* Main printf-like API for user processes.
- * Usage:
- *   PRINT("Value=%d\r\n", x);
+ * Simplified functions for freestanding mode (no stdarg.h)
  */
-void PRINT(const char *fmt, ...);
+void PRINT_char(char c);
+void PRINT_int(int value);
 
 /* Convenience: PRINT with automatic CRLF appended.
  * Example:
